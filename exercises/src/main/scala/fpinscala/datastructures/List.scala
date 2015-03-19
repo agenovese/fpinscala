@@ -1,6 +1,12 @@
 package fpinscala.datastructures
 
-sealed trait List[+A]
+sealed trait List[+A] {
+  def flatMap[B](f: A => List[B]): List[B] =
+    List.foldRight(this, List(): List[B])((a, bs) => List.append(f(a), bs))
+
+  def map[B](f: A => B): List[B] = List.foldRight(this, List(): List[B])((a, bs) => Cons(f(a), bs))
+
+}
 
 // `List` data type, parameterized on a type, `A`
 case object Nil extends List[Nothing]
@@ -113,30 +119,69 @@ object List {
   def foldLeftViaFoldRight[A, B](l: List[A], z: B)(f: (B, A) => B): B =
     foldRight(reverse(l), z)((a, b) => f(b, a))
 
+  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] =
+    foldRight(l, r)((a, ls) => Cons(a, ls))
 
-  def appendViaFoldRight[A](l: List[A], r: List[A]): List[A] = ???
+  def concat[A](l: List[List[A]]): List[A] =
+    foldRightViaFoldLeft(l, List(): List[A])((s, d) => appendViaFoldRight(s, d))
 
-  def concat[A](l: List[List[A]]): List[A] = ???
+  def concat2[A](l: List[List[A]]): List[A] =
+    l match {
+      case Cons(h, t) => appendViaFoldRight(h, concat(t))
+      case Nil => Nil
+    }
 
-  def add1(l: List[Int]): List[Int] = ???
+  def add1(l: List[Int]): List[Int] = foldRight(l, List(): List[Int])((i, ls) => Cons(i + 1, ls))
 
-  def doubleToString(l: List[Double]): List[String] = ???
+  def doubleToString(l: List[Double]): List[String] = foldRight(l, List(): List[String])((i, ls) => Cons(i.toString, ls))
 
-  def map[A, B](l: List[A])(f: A => B): List[B] = ???
+  def map[A, B](l: List[A])(f: A => B): List[B] = foldRight(l, List(): List[B])((a, bs) => Cons(f(a), bs))
 
-  def filter[A](l: List[A])(f: A => Boolean): List[A] = ???
+  def filter[A](l: List[A])(p: A => Boolean): List[A] =
+    foldRight(l, List(): List[A])((a, bs) => if (p(a)) Cons(a, bs) else bs)
 
-  def flatMap[A, B](l: List[A])(f: A => List[B]): List[B] = ???
+  def flatMap[A, B](l: List[A])(f: A => List[B]): List[B] =
+    foldRight(l, List(): List[B])((a, bs) => append(f(a), bs))
 
-  def filterViaFlatMap[A](l: List[A])(f: A => Boolean): List[A] = ???
+  def filterViaFlatMap[A](l: List[A])(f: A => Boolean): List[A] =
+    flatMap(l)((a) => if(f(a)) List(a) else List())
 
-  def addPairwise(a: List[Int], b: List[Int]): List[Int] = ???
+  //pad to longest
+  def addPairwise(a: List[Int], b: List[Int]): List[Int] = (a,b) match {
+    case (Cons(ha,ta), Cons(hb,tb)) => Cons(ha + hb, addPairwise(ta, tb))
+    case (Nil, b) => b
+    case (h, Nil) => h
+  }
 
-  def zipWith[A, B, C](a: List[A], b: List[B])(f: (A, B) => C): List[C] = ???
+  //truncate to shortest
+  def addPairwise2(a: List[Int], b: List[Int]): List[Int] = (a,b) match {
+    case (Cons(ha,ta), Cons(hb,tb)) => Cons(ha + hb, addPairwise(ta, tb))
+    case (Nil, _) => Nil
+    case (_, Nil) => Nil
+  }
 
-  def startsWith[A](l: List[A], prefix: List[A]): Boolean = ???
+  def zipWith[A, B, C](a: List[A], b: List[B])(f: (A, B) => C): List[C] = (a,b) match {
+    case (Cons(ha,ta), Cons(hb,tb)) => Cons(f(ha, hb), zipWith(ta, tb)(f))
+    case (Nil, _) => Nil
+    case (_, Nil) => Nil
+  }
+
+  def startsWith[A](l: List[A], prefix: List[A]): Boolean =
+    length(l) >= length(prefix) && foldRight(zipWith(l,prefix)((a, p) => a == p), true)((a,b) => a && b)
+
+  def startsWith[A](l: List[A], prefix: List[A]): Boolean = (l,prefix) match {
+    case (Cons(hl,tl), Cons(hp,tp)) => hl == hp && startsWith(tl, tp)
+    case (Nil, Cons(_, _)) => false
+    case (_, Nil) => true
+  }
+
 
   //  @annotation.tailrec
-  def hasSubsequence[A](l: List[A], sub: List[A]): Boolean = ???
+  def hasSubsequence[A](l: List[A], sub: List[A]): Boolean =
+    if(length(l) >= length(sub)) {
+      startsWith(l, sub) || hasSubsequence(tail(l), sub)
+    } else {
+      false
+    }
 
 }

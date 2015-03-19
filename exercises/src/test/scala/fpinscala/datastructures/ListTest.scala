@@ -75,4 +75,48 @@ class ListTest extends Specification {
       init(List(1, 2, 3, 4, 5)) must be equalTo List(1, 2, 3, 4)
     }
   }
+  "append" should {
+    "append 2 lists together" in {
+      appendViaFoldRight(List(1, 2, 3, 4, 5), List(6, 7, 8, 9)) must be equalTo List(1, 2, 3, 4, 5, 6, 7, 8, 9)
+    }
+  }
+  "Concat" should {
+    "concatenate 3 lists together" in {
+      concat(List(List(1, 2, 3, 4, 5), List(6, 7, 8, 9), List(10, 11, 12, 13))) must be equalTo
+        List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+    }
+  }
+  "add1" should {
+    "add 1 to each element in the list" in {
+      add1(List(1, 2, 3, 4, 5)) must be equalTo List(2, 3, 4, 5, 6)
+    }
+  }
+  "doubleToString" should {
+    "convert list of doubles to list of strings" in {
+      doubleToString(List(1, 2, 3, 4, 5)) must be equalTo List("1.0", "2.0", "3.0", "4.0", "5.0")
+    }
+  }
+  "filter" should {
+    "remove all odd numbers from a list of Ints when passed the appropriate predicate" in {
+      filter(List(1, 2, 3, 4, 5))(i => i % 2 == 0) must be equalTo List(2,4)
+    }
+  }
+  "flatmap" should {
+    "concatenate the results of running f on each item in the list" in {
+      flatMap(List(1,2,3))(i => List(i,i)) must be equalTo List(1,1,2,2,3,3)
+    }
+  }
+  "filterViaFlatmap" should {
+    "remove all odd numbers from a list of Ints when passed the appropriate predicate" in {
+      filterViaFlatMap(List(1, 2, 3, 4, 5))(i => i % 2 == 0) must be equalTo List(2,4)
+    }
+  }
+  "addPairWise" should {
+    "add corresponding values in 2 lists" in {
+      addPairwise(List(1,2,3), List(4,5,6)) must be equalTo List(5,7,9)
+    }
+    "do something if the lists differ in length" in {
+      addPairwise3(List(1,2,3), List(4,5,6, 7)) must be equalTo List(5,7,9)
+    }
+  }
 }
