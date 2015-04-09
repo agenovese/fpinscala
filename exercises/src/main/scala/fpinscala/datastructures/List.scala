@@ -169,7 +169,7 @@ object List {
   def startsWith[A](l: List[A], prefix: List[A]): Boolean =
     length(l) >= length(prefix) && foldRight(zipWith(l,prefix)((a, p) => a == p), true)((a,b) => a && b)
 
-  def startsWith[A](l: List[A], prefix: List[A]): Boolean = (l,prefix) match {
+  def startsWith2[A](l: List[A], prefix: List[A]): Boolean = (l,prefix) match {
     case (Cons(hl,tl), Cons(hp,tp)) => hl == hp && startsWith(tl, tp)
     case (Nil, Cons(_, _)) => false
     case (_, Nil) => true

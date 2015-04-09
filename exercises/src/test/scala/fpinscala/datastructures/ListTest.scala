@@ -116,7 +116,7 @@ class ListTest extends Specification {
       addPairwise(List(1,2,3), List(4,5,6)) must be equalTo List(5,7,9)
     }
     "do something if the lists differ in length" in {
-      addPairwise3(List(1,2,3), List(4,5,6, 7)) must be equalTo List(5,7,9)
+      addPairwise(List(1,2,3), List(4,5,6,7)) must be equalTo List(5,7,9)
     }
   }
 }
