@@ -74,4 +74,29 @@ class StreamTest extends Specification {
       Stream(1, 2, 3, 4, 5).flatmap(a => Stream(a,a + 1)).toList must be equalTo List(1, 2, 2, 3, 3, 4, 4, 5, 5, 6)
     }
   }
+  "constant" should {
+    "return the same stuff over and over" in {
+      Stream.constant(10).take(10).toList must be equalTo List(10, 10, 10, 10, 10, 10, 10, 10, 10, 10)
+    }
+  }
+  "from" should {
+    "return an ever incrementing list" in {
+      Stream.from(10).take(10).toList must be equalTo List(10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
+    }
+  }
+  "fibs" should {
+    "commit a functional programming clichee" in {
+      Stream.fibs.take(10).toList must be equalTo List(0, 1, 1, 2, 3, 5, 8, 13, 21, 34)
+    }
+  }
+  "fibsViaUnfold" should {
+    "also commit a functional programming clichee" in {
+      Stream.fibsUnfold.take(10).toList must be equalTo List(0, 1, 1, 2, 3, 5, 8, 13, 21, 34)
+    }
+  }
+  "unfold" should {
+    "unfold things" in {
+      Stream.unfold(10)(s => Some((s, s+1))).take(10).toList must be equalTo List(10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
+    }
+  }
 }
