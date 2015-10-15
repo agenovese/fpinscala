@@ -99,4 +99,49 @@ class StreamTest extends Specification {
       Stream.unfold(10)(s => Some((s, s+1))).take(10).toList must be equalTo List(10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
     }
   }
+  "Starts with" should {
+    "return true for a stream that starts with another stream" in {
+      Stream(1, 2, 3).startsWith(Stream(1, 2)) must be equalTo true
+    }
+    "return true for the same streams" in {
+      Stream(1, 2, 3).startsWith(Stream(1, 2, 3)) must be equalTo true
+    }
+    "return true for the trivial prefix" in {
+      Stream(1, 2, 3).startsWith(Stream()) must be equalTo true
+    }
+    "return true for the trivial prefix starting with the trivial prefix" in {
+      Stream().startsWith(Stream()) must be equalTo true
+    }
+    "return false for the non-matching streams" in {
+      Stream(1,2,3).startsWith(Stream(3, 2, 1)) must be equalTo false
+    }
+    "return false for a longer sub-stream" in {
+      Stream(1,2,3).startsWith(Stream(1, 2, 3, 4, 5)) must be equalTo false
+    }
+    "return false for an infinite sub stream" in {
+      Stream(1,2,3).startsWith(Stream.ones) must be equalTo false
+    }
+    "return false for an infinite stream that doesn't match a limited stream" in {
+      Stream.ones.startsWith(Stream(1, 2, 3)) must be equalTo false
+    }
+    "return false for an infinite stream that doesn't match a infinite stream" in {
+      Stream.ones.startsWith(Stream.constant(2)) must be equalTo false
+    }
+    "return true for an infinite stream that does match a limited stream" in {
+      Stream.ones.startsWith(Stream(1, 1, 1)) must be equalTo true
+    }
+  }
+  "tails" should {
+    "do the thing from the book" in {
+      Stream(1, 2, 3).tails.toList.map(_.toList) must be equalTo List(List(1, 2, 3), List(2, 3), List(3), List())
+    }
+    "not produce double empty stream" in {
+      Stream().tails.toList.map(_.toList) must be equalTo List(List())
+    }
+  }
+  "scanRight" should {
+    "do the thing from the book" in {
+      Stream(1,2,3).scanRight(0)(_ + _).toList must be equalTo List(6, 5, 3, 0)
+    }
+  }
 }
