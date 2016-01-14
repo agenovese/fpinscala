@@ -102,26 +102,37 @@ object RNG {
       }
     }
 
-  def intsViaSequence(count: Int):  Rand[List[Int]] = sequence(List.fill(count)(int))
+  def intsViaSequence(count: Int): Rand[List[Int]] = sequence(List.fill(count)(int))
 
-
-    def flatMap[A, B](f: Rand[A])(g: A => Rand[B]): Rand[B] =
+  def flatMap[A, B](f: Rand[A])(g: A => Rand[B]): Rand[B] =
     rng => {
       val (a, r2) = f(rng)
       val rb: Rand[B] = g(a)
       rb(r2)
     }
+
+  def mapViaFlatmap[A, B](s: Rand[A])(f: A => B): Rand[B] =
+    flatMap(s)(a => unit(f(a)))
+
+  def map2ViaFlatmap[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = {
+
+    flatMap(ra)(a => map(rb)(b => f(a, b)))
+  }
+
 }
 
 case class State[S, +A](run: S => (A, S)) {
   def map[B](f: A => B): State[S, B] =
-    sys.error("todo")
+    flatMap(a => State.unit(f(a)))
 
   def map2[B, C](sb: State[S, B])(f: (A, B) => C): State[S, C] =
-    sys.error("todo")
+    flatMap(a => sb.map(b => f(a, b)))
 
   def flatMap[B](f: A => State[S, B]): State[S, B] =
-    sys.error("todo")
+    State(s => {
+      val (a, s2) = run(s)
+      f(a).run(s2)
+    })
 }
 
 sealed trait Input
@@ -131,9 +142,48 @@ case object Coin extends Input
 case object Turn extends Input
 
 case class Machine(locked: Boolean, candies: Int, coins: Int)
-
 object State {
   type Rand[A] = State[RNG, A]
 
-  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] =
+    for{
+      _ <- sequence(inputs.map(inputToState))
+      m <- get
+    } yield (m.candies, m.coins)
+
+
+  def inputToState(input: Input): State[Machine, Unit] =
+    State( m =>
+      (input, m) match {
+        case (Coin, Machine(true, candy, coins)) if candy > 0 => ((), Machine(locked = false, candy, coins + 1))
+        case (Turn, Machine(false, candy, coins)) => ((), Machine(locked = true, candy - 1, coins))
+        case (Turn, Machine(true, _, _)) => ((), m)
+        case (Coin, Machine(false, _, _)) => ((), m)
+        case (_, Machine(_, candy, _)) if candy == 0 => ((), m)
+      }
+    )
+
+  def unit[S, A](a: A): State[S, A] = State(s => (a, s))
+
+  def sequence[S, A](fs: List[State[S, A]]): State[S, List[A]] =
+    State(s => {
+      fs match {
+        case ra :: t =>
+          val (a, s2) = ra.run(s)
+          val (l, s3) = sequence(t).run(s2)
+          (a :: l, s3)
+        case Nil => (Nil, s)
+      }
+    })
+
+  def get[S]: State[S, S] = State(s => (s, s))
+
+  def set[S](s: S): State[S, Unit] = State(_ => ((), s))
+
+  def modify[S](f: S => S): State[S, Unit] = for {
+    s <- get
+    _ <- set(f(s))
+  } yield ()
 }
+
+
